@@ -1,0 +1,15 @@
+{
+  "name": "yr-speed-tests",
+  "description": "TODO: Make package containing dependencies and tools for speed-latency testing",
+  "devDependencies": {
+    "should": "^5.2.0",
+    "webpagetest": "^0.3.3"
+  },
+  "scripts": {
+    "test": "bash run-tests.sh"
+  },
+  "engine": "node >= 0.8.0",
+  "dependencies": {
+    "should": "^5.0.0"
+  }
+}
