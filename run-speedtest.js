@@ -4,7 +4,7 @@ var process_testurl = (process.env.testurl? process.env.testurl : null);
 var process_apikey = (process.env.apikey? process.env.apikey : null);
 var process_timeout = parseInt(process.env.timeout? process.env.timeout : 500);
 var process_testruns = parseInt(process.env.testruns? process.env.testruns : 2);
-var process_speedtestserver = (process.env.speedtestserver? process.env.speedtestserver : 'http://yr-speedtest-1.cloudapp.net'); // Default public server available is: http://www.webpagetest.org/
+var process_speedtestserver = (process.env.speedtestserver? process.env.speedtestserver : 'http://www.webpagetest.org/'); // Default public server available is: http://www.webpagetest.org/
 
 // Parameter checks
 if(process_testurl==null) throw new Error('Missing ENV parameter TESTURL');
