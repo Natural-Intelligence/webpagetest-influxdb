@@ -2,6 +2,7 @@
   "name": "yr-speed-tests",
   "description": "TODO: Make package containing dependencies and tools for speed-latency testing",
   "devDependencies": {
+    "influx": "^4.0.0",
     "should": "^5.2.0",
     "webpagetest": "^0.3.3"
   },
