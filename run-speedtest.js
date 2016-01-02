@@ -17,18 +17,19 @@ influxClient.getDatabaseNames( function(err, arrayDatabaseNames){
    console.log('Found influx database: ' + arrayDatabaseNames);
 });
 
-var process_testurl = (process.env.testurl? process.env.testurl : null);
-var process_apikey = (process.env.apikey? process.env.apikey : null);
-var process_timeout = parseInt(process.env.timeout? process.env.timeout : 500);
-var process_testruns = parseInt(process.env.testruns? process.env.testruns : 2);
-var process_buildnumber = parseInt(process.env.buildnumber? process.env.buildnumber : -1);
-var process_speedtestserver = (process.env.speedtestserver? process.env.speedtestserver : 'http://www.webpagetest.org/'); // Default public server, or use your local webpagetest installation by replacing with your ip here
+var process_testurl = (process.env.TESTURL? process.env.TESTURL : null);
+var process_apikey = (process.env.APIKEY? process.env.APIKEY : null);
+var process_location = (process.env.LOCATION? process.env.LOCATION : 'Dulles:Chrome');
+var process_timeout = parseInt(process.env.TIMEOUT? process.env.TIMEOUT : 500);
+var process_testruns = parseInt(process.env.TESTRUNS? process.env.TESTRUNS : 2);
+var process_buildnumber = parseInt(process.env.BUILDNUMBER? process.env.BUILDNUMBER : -1);
+var process_speedtestserver = (process.env.SPEEDTESTSERVER? process.env.SPEEDTESTSERVER : 'http://www.webpagetest.org/'); // Default public server, or use your local webpagetest installation by replacing with your ip here
 var process_consoletimer = parseInt(process.env.consoletimer? process.env.consoletimer : 10);
 
 // Parameter checks
 if(process_testurl==null) throw new Error('Missing ENV parameter TESTURL');
 if(process_apikey==null) throw new Error('Missing ENV parameter APIKEY')
-if(process_buildnumber==-1) throw new Error('Missing ENV parameter BUILDNUMBER. Needs to be set to track trend over time.')
+// if(process_buildnumber==-1) throw new Error('Missing ENV parameter BUILDNUMBER. Needs to be set to track trend over time.')
 
 var timerId = startConsoleTimer(process_consoletimer); // Define and run a console timer to give feedback
 
@@ -36,7 +37,7 @@ var wpt = new WebPageTest(process_speedtestserver, process_apikey);
 console.log('Running pagespeedtest on url "'+process_testurl+'" using server "'+process_speedtestserver+'". Requiring results within: '+process_timeout+' seconds');
 var runStart = new Date().getTime()
 
-wpt.runTest(process_testurl, {pollResults: 10, timeout: process_timeout, runs: process_testruns, pageSpeed: true}, function(err, response) {
+wpt.runTest(process_testurl, {location: process_location, pollResults: 10, timeout: process_timeout, runs: process_testruns, pageSpeed: true}, function(err, response) {
 
 	var testDurationMs = (new Date().getTime()-runStart)
 	console.log('Test run time: ' + (testDurationMs>1? (testDurationMs/1000) + ' seconds' : 'NA'))
