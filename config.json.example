@@ -1,0 +1,18 @@
+{
+  "consoletimer" : 10,
+  "wpt" : {
+    "apikey" : "ADD_YOUR_KEY_HERE",
+    "location" : "Dulles:Chrome",
+    "timeout" : 300,
+    "testruns" : 2,
+    "testserver" : "http://www.webpagetest.org/"
+  },
+  "influx" : {
+    "host" : "INFLUX_DB_HOSTNAME_OR_IP",
+    "port" : 8086,
+    "protocol" : "http",
+    "username" : "apikey",
+    "password" : "MD5_HASH_TO_AVOID_PASSWORD_IN_CONFIG",
+    "database" : "your_db_name"
+  }
+}

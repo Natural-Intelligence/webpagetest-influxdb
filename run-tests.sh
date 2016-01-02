@@ -1,19 +1,29 @@
 #!/bin/bash
 cd "$(dirname "$0")"
 
-if [ -z "$2" ]; then
-	echo "Usage: runtests.sh <url-to-test> <apikey> [location]"
-	exit 1;
+if [ -z "$1" ]; then
+  echo "Usage: runtests.sh [-k <apikey>] [-l <location>] <url-to-test>"
+  exit 1;
 fi;
 
-# OLD: ./node_modules/webpagetest/bin/webpagetest test $1 --key $2
-export TESTURL=$1
-export APIKEY=$2
-if [ -z "$3" ]; then
-	export LOCATION=$3
-fi;
-export TIMEOUT=300
-export TESTRUNS=3
+nodeenv=""
 
-node ./run-speedtest.js
+while [ "$1" != "" ]; do
+  case $1 in
+    -k | --key | --apikey )
+      shift
+      nodeenv+=" APIKEY=$1"
+      ;;
+    -l | --location )
+      shift
+      nodeenv+=" LOCATION=$1"
+      ;;
+    * )
+      nodeenv+=" TESTURL=$1"
+      break
+  esac
+  shift
+done
+
+env $nodeenv node ./run-speedtest.js
 

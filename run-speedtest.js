@@ -1,48 +1,45 @@
 #!/usr/bin/env node
 
+var fs = require("fs");
+if(!fs.existsSync(__dirname + '/config.json')) {
+  console.error("Configuration file is missing! ('config.json')");
+  process.exit(100);
+}
+
 var WebPageTest = require('webpagetest'); // Documentation on: https://www.npmjs.com/package/webpagetest
 var influx = require('influx')
+var config = require(__dirname + '/config.json');
 
-// TODO: Extract config? Serialize and fetch from environment?
-var influxClient = influx({
-    host : 'INFLUX_DB_HOSTNAME_OR_IP',
-    port : 8086,
-    protocol : 'http',
-    username : 'apikey',
-    password : 'MD5_HASH_TO_AVOID_PASSWORD_IN_CONFIG',
-    database : 'your_db_name'
-})
+var influxClient = influx(config.influx);
 
 influxClient.getDatabaseNames( function(err, arrayDatabaseNames){
    console.log('Found influx database: ' + arrayDatabaseNames);
 });
 
-var process_testurl = (process.env.TESTURL? process.env.TESTURL : null);
-var process_apikey = (process.env.APIKEY? process.env.APIKEY : null);
-var process_location = (process.env.LOCATION? process.env.LOCATION : 'Dulles:Chrome');
-var process_timeout = parseInt(process.env.TIMEOUT? process.env.TIMEOUT : 500);
-var process_testruns = parseInt(process.env.TESTRUNS? process.env.TESTRUNS : 2);
-var process_buildnumber = parseInt(process.env.BUILDNUMBER? process.env.BUILDNUMBER : -1);
-var process_speedtestserver = (process.env.SPEEDTESTSERVER? process.env.SPEEDTESTSERVER : 'http://www.webpagetest.org/'); // Default public server, or use your local webpagetest installation by replacing with your ip here
-var process_consoletimer = parseInt(process.env.consoletimer? process.env.consoletimer : 10);
+var testurl = process.env.TESTURL || null;
+config.wpt.apikey = process.env.APIKEY || config.wpt.apikey;
+config.wpt.location = process.env.LOCATION || config.wpt.location;
+config.wpt.timeout = parseInt(process.env.TIMEOUT) || config.wpt.timeout;
+config.wpt.testruns = parseInt(process.env.TESTRUNS) || config.wpt.testruns;
+var buildnumber = parseInt(process.env.BUILDNUMBER) || -1;
+config.wpt.testserver = process.env.TESTSERVER || config.wpt.testserver;
+config.consoletimer = parseInt(process.env.consoletimer) || config.consoletimer;
 
 // Parameter checks
-if(process_testurl==null) throw new Error('Missing ENV parameter TESTURL');
-if(process_apikey==null) throw new Error('Missing ENV parameter APIKEY')
-// if(process_buildnumber==-1) throw new Error('Missing ENV parameter BUILDNUMBER. Needs to be set to track trend over time.')
+if(testurl==null) throw new Error('Missing ENV parameter TESTURL');
 
-var timerId = startConsoleTimer(process_consoletimer); // Define and run a console timer to give feedback
+var timerId = startConsoleTimer(config.consoletimer);
 
-var wpt = new WebPageTest(process_speedtestserver, process_apikey);
-console.log('Running pagespeedtest on url "'+process_testurl+'" using server "'+process_speedtestserver+'". Requiring results within: '+process_timeout+' seconds');
+var wpt = new WebPageTest(config.wpt.testserver, config.wpt.apikey);
+console.log('Running pagespeedtest on url "'+testurl+'" using server "'+config.wpt.testserver+'" with location "'+config.wpt.location+'". Requiring results within: '+config.wpt.timeout+' seconds');
 var runStart = new Date().getTime()
 
-wpt.runTest(process_testurl, {location: process_location, pollResults: 10, timeout: process_timeout, runs: process_testruns, pageSpeed: true}, function(err, response) {
+wpt.runTest(testurl, {location: config.wpt.location, pollResults: 10, timeout: config.wpt.timeout, runs: config.wpt.testruns, pageSpeed: true}, function(err, response) {
 
 	var testDurationMs = (new Date().getTime()-runStart)
 	console.log('Test run time: ' + (testDurationMs>1? (testDurationMs/1000) + ' seconds' : 'NA'))
 
-	if(err) throw new Error("Could not run webpagetest for url: '" + process_testurl + "', ERROR: " + JSON.stringify(err))
+	if(err) throw new Error("Could not run webpagetest for url: '" + testurl + "', ERROR: " + JSON.stringify(err))
 
 	var testId = response.data.id
 
@@ -67,7 +64,7 @@ wpt.runTest(process_testurl, {location: process_location, pollResults: 10, timeo
 			console.log( repeatView.SpeedIndex, repeatView.firstPaint, repeatView.visualComplete, repeatView.images.waterfall)
 
             // Post speed indexes to results db, tag with build number and url for reference
-            influxClient.writePoint('webpagetest', {value: firstView.SpeedIndex, value2: repeatView.SpeedIndex} , { 'buildnumber': process_buildnumber, 'testurl': escapeInfluxDbWrite(process_testurl), 'repeatruns': process_testruns}, function(done) {
+            influxClient.writePoint('webpagetest', {value: firstView.SpeedIndex, value2: repeatView.SpeedIndex} , { 'buildnumber': buildnumber, 'testurl': escapeInfluxDbWrite(testurl), 'repeatruns': config.wpt.testruns}, function(done) {
                console.log('Influx db response: '); console.log( (done==null? 'OK' : done) );
                stopConsoleTimer();
             });
