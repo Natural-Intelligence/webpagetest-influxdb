@@ -1,16 +1,19 @@
 {
-  "name": "yr-speed-tests",
-  "description": "TODO: Make package containing dependencies and tools for speed-latency testing",
-  "devDependencies": {
-    "influx": "^4.0.0",
-    "should": "^5.2.0",
-    "webpagetest": "^0.3.3"
+  "name": "webpagetest-influxdb",
+  "version": "0.0.1",
+  "description": "Automates Webpagetests and stores the results in InfluxDB for later analysis in Grafana",
+  "keywords": [
+      "webpagetest",
+      "influxdb",
+      "speedtest",
+      "pagetest"
+  ],
+  "dependencies": {
+    "influx": "^4.1.0",
+    "webpagetest": "^0.3.4"
   },
   "scripts": {
     "test": "bash run-tests.sh"
   },
-  "engine": "node >= 0.8.0",
-  "dependencies": {
-    "should": "^5.0.0"
-  }
+  "engines": "node >= 0.8.0"
 }

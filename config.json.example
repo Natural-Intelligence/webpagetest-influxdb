@@ -11,7 +11,7 @@
     "host" : "INFLUX_DB_HOSTNAME_OR_IP",
     "port" : 8086,
     "protocol" : "http",
-    "username" : "apikey",
+    "username" : "INFLUX_USER",
     "password" : "MD5_HASH_TO_AVOID_PASSWORD_IN_CONFIG",
     "database" : "your_db_name"
   }
