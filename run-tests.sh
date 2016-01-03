@@ -30,4 +30,3 @@ while [ "$1" != "" ]; do
 done
 
 env $nodeenv node ./run-speedtest.js
-
