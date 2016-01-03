@@ -10,23 +10,33 @@ var WebPageTest = require('webpagetest'); // Documentation on: https://www.npmjs
 var influx = require('influx')
 var config = require(__dirname + '/config.json');
 
-var influxClient = influx(config.influx);
-
-influxClient.getDatabaseNames( function(err, arrayDatabaseNames){
-   console.log('Found influx database: ' + arrayDatabaseNames);
-});
-
 var testurl = process.env.TESTURL || null;
+var testlabel = process.env.LABEL || null;
 config.wpt.apikey = process.env.APIKEY || config.wpt.apikey;
 config.wpt.location = process.env.LOCATION || config.wpt.location;
 config.wpt.timeout = parseInt(process.env.TIMEOUT) || config.wpt.timeout;
 config.wpt.testruns = parseInt(process.env.TESTRUNS) || config.wpt.testruns;
-var buildnumber = parseInt(process.env.BUILDNUMBER) || -1;
+var buildnumber = parseInt(process.env.BUILDNUMBER) || 0;
 config.wpt.testserver = process.env.TESTSERVER || config.wpt.testserver;
 config.consoletimer = parseInt(process.env.consoletimer) || config.consoletimer;
 
 // Parameter checks
 if(testurl==null) throw new Error('Missing ENV parameter TESTURL');
+
+var influxClient = influx(config.influx);
+
+influxClient.getDatabaseNames( function(err, arrayDatabaseNames){
+  console.log('Found influx database: ' + arrayDatabaseNames);
+});
+
+var influxTags = { 
+  'testurl': escapeInfluxDbWrite(testurl),
+  'location': escapeInfluxDbWrite(config.wpt.location),
+  'repeatruns': config.wpt.testruns
+};
+
+if(buildnumber) influxTags.buildnumber = buildnumber;
+if(testlabel) influxTags.label = testlabel;
 
 var timerId = startConsoleTimer(config.consoletimer);
 
@@ -52,7 +62,7 @@ wpt.runTest(testurl, {location: config.wpt.location, pollResults: 10, timeout: c
 			if(err) throw new Error("Could not get test results for testId: " + testId)
 
 			console.log('Test highlights:')
-
+			
 			console.log('TestUrl: ' + testData.data.url)
 			console.log('TestSummary: ' + testData.data.summary)
 
@@ -64,7 +74,7 @@ wpt.runTest(testurl, {location: config.wpt.location, pollResults: 10, timeout: c
 			console.log( repeatView.SpeedIndex, repeatView.firstPaint, repeatView.visualComplete, repeatView.images.waterfall)
 
             // Post speed indexes to results db, tag with build number and url for reference
-            influxClient.writePoint('webpagetest', {value: firstView.SpeedIndex, value2: repeatView.SpeedIndex} , { 'buildnumber': buildnumber, 'testurl': escapeInfluxDbWrite(testurl), 'repeatruns': config.wpt.testruns}, function(done) {
+            influxClient.writePoint('webpagetest', {value: firstView.SpeedIndex, value2: repeatView.SpeedIndex} , influxTags, function(done) {
                console.log('Influx db response: '); console.log( (done==null? 'OK' : done) );
                stopConsoleTimer();
             });
