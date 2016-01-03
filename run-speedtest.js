@@ -12,11 +12,11 @@ var config = require(__dirname + '/config.json');
 
 var testurl = process.env.TESTURL || null;
 var testlabel = process.env.LABEL || null;
+var buildnumber = parseInt(process.env.BUILDNUMBER) || 0;
 config.wpt.apikey = process.env.APIKEY || config.wpt.apikey;
 config.wpt.location = process.env.LOCATION || config.wpt.location;
 config.wpt.timeout = parseInt(process.env.TIMEOUT) || config.wpt.timeout;
 config.wpt.testruns = parseInt(process.env.TESTRUNS) || config.wpt.testruns;
-var buildnumber = parseInt(process.env.BUILDNUMBER) || 0;
 config.wpt.testserver = process.env.TESTSERVER || config.wpt.testserver;
 config.consoletimer = parseInt(process.env.consoletimer) || config.consoletimer;
 
