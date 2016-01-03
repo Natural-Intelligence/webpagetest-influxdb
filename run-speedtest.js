@@ -2,18 +2,21 @@
 
 var fs = require('fs')
 if (!fs.existsSync(__dirname + '/config.json')) throw new Error('Configuration file config.json is missing!')
+if (!fs.existsSync(__dirname + '/data.json')) throw new Error('Configuration file data.json is missing!')
 
 var WebPageTest = require('webpagetest') // Documentation on: https://www.npmjs.com/package/webpagetest
 var influx = require('influx')
 var config = require(__dirname + '/config.json')
+var data = require(__dirname + '/data.json')
 
 var testurl = process.env.TESTURL || null
 var testlabel = process.env.LABEL || null
 var buildnumber = parseInt(process.env.BUILDNUMBER, 10) || 0
+
 config.wpt.apikey = process.env.APIKEY || config.wpt.apikey
 config.wpt.location = process.env.LOCATION || config.wpt.location
 config.wpt.timeout = parseInt(process.env.TIMEOUT, 10) || config.wpt.timeout
-config.wpt.testruns = parseInt(process.env.TESTRUNS, 10) || config.wpt.testruns
+config.wpt.testruns = parseInt(process.env.TESTRUNS || config.wpt.testruns, 10)
 config.wpt.testserver = process.env.TESTSERVER || config.wpt.testserver
 config.consoletimer = parseInt(process.env.consoletimer, 10) || config.consoletimer
 
@@ -55,18 +58,28 @@ wpt.runTest(testurl, {location: config.wpt.location, pollResults: 10, timeout: c
 
     wpt.getTestResults(testId, function (err, testData) {
       if (err) throw new Error('Could not get test results for testId: ' + testId)
+      
       console.log('Test highlights:')
-      console.log('TestUrl: ' + testData.data.url)
-      console.log('TestSummary: ' + testData.data.summary)
+      console.log('- Url: ' + testData.data.url)
+      console.log('- Summary: ' + testData.data.summary)
+      console.log('- Location: ' + testData.data.location)
+      console.log('- Connectivity: ' + testData.data.connectivity)
       console.log('Test timings:')
       console.log('SpeedIndex', 'firstPaint', 'visualComplete', 'waterfall')
       var firstView = testData.data.median.firstView
       console.log(firstView.SpeedIndex, firstView.firstPaint, firstView.visualComplete, firstView.images.waterfall)
       var repeatView = testData.data.median.repeatView
       console.log(repeatView.SpeedIndex, repeatView.firstPaint, repeatView.visualComplete, repeatView.images.waterfall)
-
+      var influxValues = {}
+      data.forEach(function (elem) {
+        influxValues['firstView.' + elem] = firstView[elem] || 0
+      })
+      data.forEach(function (elem) {
+        influxValues['repeatView.' + elem] = repeatView[elem] || 0
+      })
+      
       // Post speed indexes to results db, tag with build number and url for reference
-      influxClient.writePoint('webpagetest', {value: firstView.SpeedIndex, value2: repeatView.SpeedIndex}, influxTags, function (done) {
+      influxClient.writePoint('webpagetest', influxValues, influxTags, function (done) {
         console.log('Influx db response: ')
         console.log((done == null ? 'OK' : done))
         stopConsoleTimer()
