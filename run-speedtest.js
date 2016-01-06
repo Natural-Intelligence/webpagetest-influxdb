@@ -16,8 +16,10 @@ var buildnumber = parseInt(process.env.BUILDNUMBER, 10) || 0
 config.wpt.apikey = process.env.APIKEY || config.wpt.apikey
 config.wpt.location = process.env.LOCATION || config.wpt.location
 config.wpt.timeout = parseInt(process.env.TIMEOUT, 10) || config.wpt.timeout
-config.wpt.testruns = parseInt(process.env.TESTRUNS || config.wpt.testruns, 10)
+config.wpt.runs = parseInt(process.env.RUNS || config.wpt.runs, 10)
 config.wpt.testserver = process.env.TESTSERVER || config.wpt.testserver
+config.wpt.connectivity = process.env.CONNECTIVITY || config.wpt.connectivity
+config.wpt.video = process.env.VIDEO || config.wpt.video
 config.consoletimer = parseInt(process.env.consoletimer, 10) || config.consoletimer
 
 // Parameter checks
@@ -33,7 +35,8 @@ influxClient.getDatabaseNames(function (err, arrayDatabaseNames) {
 var influxTags = {
   'testurl': escapeInfluxDbWrite(testurl),
   'location': escapeInfluxDbWrite(config.wpt.location),
-  'repeatruns': config.wpt.testruns
+  'runs': config.wpt.runs,
+  'connectivity': config.wpt.connectivity
 }
 
 if (buildnumber) influxTags.buildnumber = buildnumber
@@ -44,8 +47,17 @@ var timerId = startConsoleTimer(config.consoletimer)
 var wpt = new WebPageTest(config.wpt.testserver, config.wpt.apikey)
 console.log('Running pagespeedtest on url "' + testurl + '" using server "' + config.wpt.testserver + '" with location "' + config.wpt.location + '". Requiring results within: ' + config.wpt.timeout + ' seconds')
 var runStart = new Date().getTime()
+var wptOptions = {
+  'location': config.wpt.location,
+  'pollResults': 10,
+  'timeout': config.wpt.timeout,
+  'runs': config.wpt.runs,
+  'pageSpeed': true,
+  'connectivity': config.wpt.connectivity,
+  'video' : config.wpt.video
+}
 
-wpt.runTest(testurl, {location: config.wpt.location, pollResults: 10, timeout: config.wpt.timeout, runs: config.wpt.testruns, pageSpeed: true}, function (err, response) {
+wpt.runTest(testurl, wptOptions, function (err, response) {
   var testDurationMs = (new Date().getTime() - runStart)
   console.log('Test run time: ' + (testDurationMs > 1 ? (testDurationMs / 1000) + ' seconds' : 'NA'))
 
@@ -58,7 +70,6 @@ wpt.runTest(testurl, {location: config.wpt.location, pollResults: 10, timeout: c
 
     wpt.getTestResults(testId, function (err, testData) {
       if (err) throw new Error('Could not get test results for testId: ' + testId)
-      
       console.log('Test highlights:')
       console.log('- Url: ' + testData.data.url)
       console.log('- Summary: ' + testData.data.summary)
@@ -77,7 +88,6 @@ wpt.runTest(testurl, {location: config.wpt.location, pollResults: 10, timeout: c
       data.forEach(function (elem) {
         influxValues['repeatView.' + elem] = repeatView[elem] || 0
       })
-      
       // Post speed indexes to results db, tag with build number and url for reference
       influxClient.writePoint('webpagetest', influxValues, influxTags, function (done) {
         console.log('Influx db response: ')

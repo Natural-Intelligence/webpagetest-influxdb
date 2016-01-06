@@ -3,8 +3,10 @@
   "wpt" : {
     "apikey" : "ADD_YOUR_KEY_HERE",
     "location" : "Dulles:Chrome",
+    "connectivity" : "Cable",
     "timeout" : 300,
-    "testruns" : 2,
+    "runs" : 3,
+    "video" : false,
     "testserver" : "http://www.webpagetest.org/"
   },
   "influx" : {

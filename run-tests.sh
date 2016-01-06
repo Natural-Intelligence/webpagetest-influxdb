@@ -22,6 +22,18 @@ while [ "$1" != "" ]; do
       shift
       nodeenv+=" LABEL=$1"
       ;;
+    -r | --runs )
+      shift
+      nodeenv+=" RUNS=$1"
+      ;;
+    -v | --video )
+      shift
+      nodeenv+=" VIDEO=$1"
+      ;;
+    -y | --connectivity )
+      shift
+      nodeenv+=" CONNECTIVITY=$1"
+      ;;
     * )
       nodeenv+=" TESTURL=$1"
       break
