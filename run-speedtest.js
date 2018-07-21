@@ -10,6 +10,7 @@ var config = require(__dirname + '/config.json')
 var data = require(__dirname + '/data.json')
 
 var testurl = process.env.TESTURL || null
+var testurl2 = process.env.TESTURL2 || null
 var testlabel = process.env.LABEL || null
 var buildnumber = parseInt(process.env.BUILDNUMBER, 10) || 0
 
@@ -34,6 +35,7 @@ influxClient.getDatabaseNames(function (err, arrayDatabaseNames) {
 
 var influxTags = {
   'testurl': escapeInfluxDbWrite(testurl),
+  'testurl2': escapeInfluxDbWrite(testurl2),
   'location': escapeInfluxDbWrite(config.wpt.location),
   'runs': config.wpt.runs,
   'connectivity': config.wpt.connectivity
@@ -57,7 +59,13 @@ var wptOptions = {
   'video' : config.wpt.video
 }
 
-wpt.runTest(testurl, wptOptions, function (err, response) {
+const scriptToTest = wpt.scriptToString([
+    {navigate: testurl},
+    {sleep:10},
+    {navigate: testurl2}
+])
+
+wpt.runTest(scriptToTest, wptOptions, function (err, response) {
   var testDurationMs = (new Date().getTime() - runStart)
   console.log('Test run time: ' + (testDurationMs > 1 ? (testDurationMs / 1000) + ' seconds' : 'NA'))
 
@@ -77,19 +85,21 @@ wpt.runTest(testurl, wptOptions, function (err, response) {
       console.log('- Connectivity: ' + testData.data.connectivity)
       console.log('Test timings:')
       console.log('SpeedIndex', 'firstPaint', 'visualComplete', 'waterfall')
-      var firstView = testData.data.median.firstView
+      var firstView = testData.data.runs['1'].firstView.steps[0]
+      var firstView2 = testData.data.runs['1'].firstView.steps[1]
       console.log(firstView.SpeedIndex, firstView.firstPaint, firstView.visualComplete, firstView.images.waterfall)
-      var repeatView = testData.data.median.repeatView
-      console.log(repeatView.SpeedIndex, repeatView.firstPaint, repeatView.visualComplete, repeatView.images.waterfall)
+      // var repeatView = testData.data.median.repeatView
+      // console.log(repeatView.SpeedIndex, repeatView.firstPaint, repeatView.visualComplete, repeatView.images.waterfall)
       var influxValues = {}
       data.forEach(function (elem) {
-        influxValues['firstView.' + elem] = firstView[elem] || 0
+        influxValues['step1.' + elem] = firstView[elem] || 0
+        influxValues['step2.' + elem] = firstView2[elem] || 0
       })
-      data.forEach(function (elem) {
-        influxValues['repeatView.' + elem] = repeatView[elem] || 0
-      })
+      // data.forEach(function (elem) {
+      //   influxValues['repeatView.' + elem] = repeatView[elem] || 0
+      // })
       // Post speed indexes to results db, tag with build number and url for reference
-      influxClient.writePoint('webpagetest', influxValues, influxTags, function (done) {
+      influxClient.writePoint('itay22', influxValues, influxTags, function (done) {
         console.log('Influx db response: ')
         console.log((done == null ? 'OK' : done))
         stopConsoleTimer()

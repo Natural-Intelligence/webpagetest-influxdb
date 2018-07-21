@@ -2,7 +2,7 @@
 cd "$(dirname "$0")"
 
 if [ -z "$1" ]; then
-  echo "Usage: runtests.sh [-k <apikey>] [-l <location>] [-n <label>] <url-to-test>"
+  echo "Usage: runtests.sh [-k <apikey>] [-l <location>] [-n <label>] [-u2 <url2>] <url1>"
   exit 1;
 fi;
 
@@ -33,6 +33,10 @@ while [ "$1" != "" ]; do
     -y | --connectivity )
       shift
       nodeenv+=" CONNECTIVITY=$1"
+      ;;
+    -u2 | --url2 )
+      shift
+      nodeenv+=" TESTURL2=$1"
       ;;
     * )
       nodeenv+=" TESTURL=$1"
